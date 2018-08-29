@@ -14,19 +14,23 @@ grammar = Lark(toylang_grammar)
 text ="""
 # Fibo
 
+main():
+    print( fibo(3) ) .
+    
+
 fibo(0) : 0 .
  
 fibo(1) : 1 . 
 
 fibo(N | N > 1): 
-    fibo( 1 ) .
+    fibo( N - 1 ) + fibo( N - 2 ).
 
 """
 
 
 def run_instruction(t):
     if t.data == 'function_definition':
-        print('funtion definition')
+        print('function definition..')
 
 
 parse_tree = grammar.parse(text)
