@@ -1,6 +1,6 @@
 start:  (_NEWLINE | stmt)*
 
-    ?stmt: (funcdef | funccall | parameter )
+    ?stmt: (funcdef | expr )
 
     funccall: [assignement] funcfirm
 
@@ -14,15 +14,21 @@ start:  (_NEWLINE | stmt)*
 
     paramlist: parameter ("," parameter)* [ "|" boolean_expr]
 
-    parameter: NAME | number
+    parameter: expr
 
     boolean_expr: parameter (comp_op parameter)*
 
     comp_op: "<"|">"|"=="|">="|"<="|"<>"|"!="|"in"|"not" "in"|"is"|"is" "not"
 
+    arith_op: "+"|"-"|"*"
+
     suite: stmt  |  _NEWLINE? stmt+ "." _NEWLINE?
 
     number: DEC_NUMBER | HEX_NUMBER | FLOAT
+
+    expr: expr_element | expr_element arith_op expr
+
+    expr_element: NAME | number | funccall
 
 
     COMMENT: /#[^\n]*/
