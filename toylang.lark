@@ -1,0 +1,45 @@
+start:  (_NEWLINE | stmt)*
+
+    ?stmt: (funcdef | funccall | parameter )
+
+    funccall: [assignement] funcfirm
+
+    assignement: NAME "="
+
+    ?funcfirm: NAME "(" parameters ")"
+
+    funcdef: funcfirm ":" suite -> function_definition
+
+    parameters: [paramlist]
+
+    paramlist: parameter ("," parameter)* [ "|" boolean_expr]
+
+    parameter: NAME | number
+
+    boolean_expr: parameter (comp_op parameter)*
+
+    comp_op: "<"|">"|"=="|">="|"<="|"<>"|"!="|"in"|"not" "in"|"is"|"is" "not"
+
+    suite: stmt  |  _NEWLINE? stmt+ "." _NEWLINE?
+
+    number: DEC_NUMBER | HEX_NUMBER | FLOAT
+
+
+    COMMENT: /#[^\n]*/
+    _NEWLINE: ( /\r?\n[\t ]*/ | COMMENT )+
+
+    string: STRING
+
+    STRING : /[ubf]?r?("(?!"").*?(?<!\\)(\\\\)*?"|'(?!'').*?(?<!\\)(\\\\)*?')/i
+    DEC_NUMBER: /[0-9]\d*l?/i
+    HEX_NUMBER: /0x[\da-f]*l?/i
+
+    %import common.FLOAT -> FLOAT
+    %import common.INT -> _INT
+    %import common.CNAME -> NAME
+
+    %ignore /[\t \f]+/  // WS
+    %ignore /\\[\t \f]*\r?\n/   // LINE_CONT
+    %ignore COMMENT
+    %declare _INDENT _DEDENT
+
