@@ -1,34 +1,40 @@
 start:  (_NEWLINE | stmt)*
 
-    ?stmt: (funcdef | expr )
+    stmt: (funcdef | expr )
 
-    funccall: [assignement] funcfirm
+    funccall: funcfirm
 
-    assignement: NAME "="
+    funcfirm: identifier "(" [paramlist] ")"
 
-    ?funcfirm: NAME "(" parameters ")"
+    funcdef: funcfirm ":" suite
 
-    funcdef: funcfirm ":" suite -> function_definition
+    paramlist: expr ("," expr)* [ "|" boolean_expr]
 
-    parameters: [paramlist]
+    boolean_expr: bool_gt | bool_lt
 
-    paramlist: parameter ("," parameter)* [ "|" boolean_expr]
+    bool_gt: expr_element ">" expr
 
-    parameter: expr
+    bool_lt: expr_element "<" expr
 
-    boolean_expr: parameter (comp_op parameter)*
-
-    comp_op: "<"|">"|"=="|">="|"<="|"<>"|"!="|"in"|"not" "in"|"is"|"is" "not"
-
-    arith_op: "+"|"-"|"*"
 
     suite: stmt  |  _NEWLINE? stmt+ "." _NEWLINE?
 
     number: DEC_NUMBER | HEX_NUMBER | FLOAT
 
-    expr: expr_element | expr_element arith_op expr
+    expr: expr_element | arith_expr | "(" arith_expr ")"
 
-    expr_element: NAME | number | funccall
+    arith_expr: arith_add | arith_sub | arith_mul
+
+
+    arith_add: expr_element "+" expr
+
+    arith_sub: expr_element "-" expr
+
+    arith_mul: expr_element "*" expr
+
+    expr_element: identifier | number | funccall
+
+    identifier: NAME
 
 
     COMMENT: /#[^\n]*/
