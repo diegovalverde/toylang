@@ -4,7 +4,8 @@
     //
     // A program is a series of functions.
     // The first function matching is called first
-    // Grammar is hopefully ll(1)
+    // Grammar is hopefully ll(1), suitable for a
+    // Top-Down parser.
     //
     ///////////////////////////////////////////
 
@@ -39,24 +40,32 @@
                     | "or" factor [boolean_expr_]
                     | ">" factor [boolean_expr_]
                     | "<" factor [boolean_expr_]
+                    | "==" factor [boolean_expr_]
+                    | "!=" factor [boolean_expr_]
 
     ///////////////////////////////////////////
 
 
-    factor: "(" expr ")" | number | NAME [arguments]
+    factor: "(" expr ")" |  list  | number | NAME [arguments] | STRING
+
+    list: "[" [arglist] "]"
+           | NAME "~" NAME
 
     arguments: "[" arglist "]" | "(" arglist ")"
 
     arglist: expr [more_args] ["|" boolean_expr]
 
-    more_args:  "," expr more_args
+    more_args:  "," expr [more_args]
 
 
     ///////////////////////////////////////////
     //Terminal Definitions
     ///////////////////////////////////////////
 
-    number: DEC_NUMBER | HEX_NUMBER | FLOAT
+    number: "-" number_
+            | number_
+
+    number_: DEC_NUMBER | HEX_NUMBER | FLOAT
 
     COMMENT: /#[^\n]*/
     _NEWLINE: ( /\r?\n[\t ]*/ | COMMENT )+

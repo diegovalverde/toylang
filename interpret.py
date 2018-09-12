@@ -1,9 +1,6 @@
 from lark import Lark, Transformer
 
 class TreeToJson(Transformer):
-    """
-    Usar notacion polaca inversa
-    """
 
     def __init__(self):
         self.symbol_map = {}
@@ -128,16 +125,21 @@ if __name__ == '__main__':
     toylang_grammar = ''
     text = ''
 
-    with open('toylang.lark', 'r') as myfile:
+    with open('toylang_ll1.lark', 'r') as myfile:
         toylang_grammar = myfile.read()
 
     print('starting')
 
-    grammar = Lark(toylang_grammar)
-    with open('fibo.toy', 'r') as myfile:
+    grammar = Lark( toylang_grammar,  debug=True)
+    #with open('examples/fibo.toy', 'r') as myfile:
+    with open('examples/dot_product.toy', 'r') as myfile:
         text = myfile.read()
 
     parse_tree = grammar.parse(text)
+
+    print('parsing done')
+
+    exit()
 
     TreeToJson().transform(parse_tree)
 
