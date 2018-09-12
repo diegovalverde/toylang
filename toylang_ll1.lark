@@ -1,0 +1,78 @@
+
+    ///////////////////////////////////////////
+    // *** Toylang Grammar ***
+    //
+    // A program is a series of functions.
+    // The first function matching is called first
+    // Grammar is hopefully ll(1)
+    //
+    ///////////////////////////////////////////
+
+
+    start: (_NEWLINE|function)*
+
+    function: NAME "(" [arglist] ")" ":" _NEWLINE? function_body
+
+    function_body: (expr _NEWLINE)* expr "." _NEWLINE?
+
+    ///////////////////////////////////////////
+    // Arithmetic Expressions
+    ///////////////////////////////////////////
+
+    expr: term [expr_]
+
+    expr_:    "+" term [expr_]
+            | "-" term [expr_]
+
+    term: factor [term_]
+
+    term_:    "*" factor [term_]
+            | "/" factor [term_]
+
+    ///////////////////////////////////////////
+    //Boolean Expression
+    ///////////////////////////////////////////
+
+    boolean_expr: factor boolean_expr_
+
+    boolean_expr_:    "^" factor [boolean_expr_]
+                    | "or" factor [boolean_expr_]
+                    | ">" factor [boolean_expr_]
+                    | "<" factor [boolean_expr_]
+
+    ///////////////////////////////////////////
+
+
+    factor: "(" expr ")" | number | NAME [arguments]
+
+    arguments: "[" arglist "]" | "(" arglist ")"
+
+    arglist: expr [more_args] ["|" boolean_expr]
+
+    more_args:  "," expr more_args
+
+
+    ///////////////////////////////////////////
+    //Terminal Definitions
+    ///////////////////////////////////////////
+
+    number: DEC_NUMBER | HEX_NUMBER | FLOAT
+
+    COMMENT: /#[^\n]*/
+    _NEWLINE: ( /\r?\n[\t ]*/ | COMMENT )+
+
+    string: STRING
+
+    STRING : /[ubf]?r?("(?!"").*?(?<!\\)(\\\\)*?"|'(?!'').*?(?<!\\)(\\\\)*?')/i
+    DEC_NUMBER: /[0-9]\d*l?/i
+    HEX_NUMBER: /0x[\da-f]*l?/i
+
+    %import common.FLOAT -> FLOAT
+    %import common.INT -> _INT
+    %import common.CNAME -> NAME
+
+    %ignore /[\t \f]+/  // WS
+    %ignore /\\[\t \f]*\r?\n/   // LINE_CONT
+    %ignore COMMENT
+    %declare _INDENT _DEDENT
+
