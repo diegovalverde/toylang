@@ -1,3 +1,17 @@
+//
+// Rewrite the grammar given in the Tiger language specification below to remove the ambiguity
+// by enforcing operator precedences and left and right associativity for different operators.
+// This part is to be done by hand.
+// 2. Modifying the grammar obtained in step 1 to support LL(k) parsing,
+// k must be minimized, so that the parser is LL(1).
+// This could include removing left recursion and performing left factoring on the grammar
+// obtained in step 1 above. You are not allowed to rewrite the grammar except using these two techniques.
+// This part is to be done by hand.
+
+
+//Make sure we use RIGHT RECURSION and not LEFT RECURSION
+//Also perform left factoring
+
 start:  (_NEWLINE | stmt)*
 
     stmt: (funcdef | expr )

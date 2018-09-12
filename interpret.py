@@ -1,43 +1,13 @@
 from lark import Lark, Transformer
 
-toylang_grammar = ''
-
-with open('toylang.lark', 'r') as myfile:
-    toylang_grammar = myfile.read()
-
-
-
-
-print('starting')
-
-grammar = Lark(toylang_grammar)
-text ="""
-# Fibo
-
-
-    
-
-fibo(0) : 60 + (5*2).
- 
-fibo(1) : 1 . 
-
-
-fibo(0)
-
-fibo(2)
-
-fibo(N | N > 1): 
-    fibo( N - 1 ) + fibo( N - 2 ).
-    
-    
-fibo(3)
-
-"""
-
 class TreeToJson(Transformer):
+    """
+    Usar notacion polaca inversa
+    """
 
     def __init__(self):
         self.symbol_map = {}
+        self.stack = []
 
     def funcdef(self,token):
         print('>>>>>>>', token)
@@ -76,20 +46,54 @@ class TreeToJson(Transformer):
         return token[0]
 
     def funccall(self,token):
+
         print(token)
         [function_name,params] = token[0]
+
 
         if function_name not in self.symbol_map:
             print('-E- Undefined function {}'.format(function_name))
         else:
-            for func in self.symbol_map[function_name]:
-                if func['params'] == params:
-                    print('executing', func['body'])
-                    for insn in func['body']:
+            for firm in self.symbol_map[function_name]:
+
+                if firm['params'] == params:
+                    print('executing', firm['body'])
+                    for insn in firm['body']:
                         res = eval(insn)
                         print('>',insn,res,)
                 else:
-                    print()
+                    print('>>>>>>>',firm['params'] )
+
+
+
+                    last_function_param = firm['params'][-1]
+                    if isinstance(last_function_param, list):
+                        constrains_satisfied = True
+                        bool_condition_list = last_function_param
+                        for i in range(len(bool_condition_list)):
+                            print(['set',firm['params'][i],params[i]])
+                            print(bool_condition_list[i])
+                            print(['jnz','label_not_met'])
+
+
+                        print('call',function_name)
+                        if constrains_satisfied:
+                            #Execute
+                            for insn in firm['body']:
+                                print('???',insn)
+                                for param in firm['params'][:-1]:
+                                    insn = insn.replace(firm['params'][i], str(params[i]))
+                                print('???2',insn)
+
+                                print('>', insn)
+
+                            print('Has boolean stuff')
+
+                    if len(params) == len(firm['params'] ):
+                        for param in firm['params']:
+                            if not isinstance(param ,str):
+                                continue
+                            print('PAR',param)
 
 
         return []
@@ -98,7 +102,7 @@ class TreeToJson(Transformer):
         return token[0]
 
     def arith_sub(self, token):
-        return '{} - {}'.format(token[0],token[1])
+        return ['sub',token[0], token[1]]
 
     def arith_add(self, token):
         return '{} + {}'.format(token[0],token[1])
@@ -107,6 +111,7 @@ class TreeToJson(Transformer):
         return '({} * {})'.format(token[0],token[1])
 
     def bool_gt(self,token):
+        return ['cmp_gt',token[0],token[1]]
         return '{} > {}'.format(token[0],token[1])
 
     def bool_lt(self,token):
@@ -119,10 +124,20 @@ class TreeToJson(Transformer):
         return token[0].value
 
 
+if __name__ == '__main__':
+    toylang_grammar = ''
+    text = ''
 
+    with open('toylang.lark', 'r') as myfile:
+        toylang_grammar = myfile.read()
 
+    print('starting')
 
-parse_tree = grammar.parse(text)
+    grammar = Lark(toylang_grammar)
+    with open('fibo.toy', 'r') as myfile:
+        text = myfile.read()
 
-TreeToJson().transform(parse_tree)
+    parse_tree = grammar.parse(text)
+
+    TreeToJson().transform(parse_tree)
 

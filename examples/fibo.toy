@@ -1,0 +1,19 @@
+# Fibo
+
+
+    
+
+fibo(0) : 60 + (5*2).
+ 
+fibo(1) : 1 . 
+
+fibo(N | N > 1): 
+    fibo( N - 1 ) + fibo( N - 2 ).
+
+
+
+
+
+fibo(2)
+
+
