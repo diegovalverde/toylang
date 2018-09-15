@@ -1,7 +1,7 @@
 from lark import Lark, Transformer
 import llvm_ast as my_ast
 from codegen import CodeGen
-import itertools
+import argparse
 
 class TreeToAst(Transformer):
 
@@ -129,6 +129,11 @@ class TreeToAst(Transformer):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Compile a program to LLVM IR.')
+    parser.add_argument('input_path', help='Path to input file')
+    args = parser.parse_args()
+
+
     toylang_grammar = ''
     text = ''
 
@@ -138,8 +143,8 @@ if __name__ == '__main__':
     print('starting')
 
     grammar = Lark(toylang_grammar)
-    #with open('examples/fibo.toy', 'r') as myfile:
-    with open('examples/simple1.toy', 'r') as myfile:
+
+    with open(args.input_path, 'r') as myfile:
         text = myfile.read()
 
     parse_tree = grammar.parse(text)
@@ -159,4 +164,7 @@ if __name__ == '__main__':
     ast_generator.transform(parse_tree)
 
     print(module)
+
+    codegen.create_ir()
+    codegen.save_ir("output.ll")
 
