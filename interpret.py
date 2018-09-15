@@ -1,22 +1,28 @@
 from lark import Lark, Transformer
+import llvm_ast as my_ast
+from codegen import CodeGen
+import itertools
 
-class TreeToJson(Transformer):
+class TreeToAst(Transformer):
 
-    def __init__(self):
+    def __init__(self, module, builder, printf):
         self.symbol_map = {}
         self.stack = []
+        self.reg_idx=0
 
-    def funcdef(self,token):
-        print('>>>>>>>', token)
-        [function_name, parameters] = token[0]
-        function_body = token[1]
-        entry = {'params': parameters, 'body': function_body}
-        if function_name not in self.symbol_map:
-            self.symbol_map[function_name] = [entry]
-        else:
-            self.symbol_map[function_name].append(entry)
-            print()
-        print('symbol_map', self.symbol_map)
+        self.module = module        # The compilation unit
+        self.builder = builder      # The LLVM builder
+        self.printf = printf        # Special library functions
+
+    def get_free_reg(self):
+        self.reg_idx +=1
+        return 'r{}'.format(self.reg_idx)
+
+    def get_main(self):
+        for fn in self.module.functions:
+            if fn.name == 'main':
+                return fn
+        return None
 
     def funcfirm(self,token):
         return token
@@ -27,98 +33,107 @@ class TreeToJson(Transformer):
     def stmt(self,token):
         return token
 
-    def paramlist(self,token):
+    def paramlist(self, token):
+        #fnty = ir.FunctionType(double, (double, double))
         return token
-
-    def string(self, (s,)):
-        return s[1:-1]
-
-    def number(self, (n,)):
-        return float(n)
 
     def expr_element(self,token):
         return token[0]
 
-    def arith_expr(self,token):
-        return token[0]
+    def function(self, tree):
 
-    def funccall(self,token):
+        fn_name = tree[0].name
 
-        print(token)
-        [function_name,params] = token[0]
+        if fn_name == 'main':
+            for insn in tree[1]:
+                print('insn', insn)
+                insn.eval()
 
-
-        if function_name not in self.symbol_map:
-            print('-E- Undefined function {}'.format(function_name))
+            return self.get_main()
         else:
-            for firm in self.symbol_map[function_name]:
+            fn_arguments = [a.name for a in tree[1]]
+            fn_body = tree[2]
 
-                if firm['params'] == params:
-                    print('executing', firm['body'])
-                    for insn in firm['body']:
-                        res = eval(insn)
-                        print('>',insn,res,)
-                else:
-                    print('>>>>>>>',firm['params'] )
+            # create the function
+            fn = my_ast.Function(self.builder, self.module, fn_name, fn_arguments, fn_body)
+            return fn.eval()
 
-
-
-                    last_function_param = firm['params'][-1]
-                    if isinstance(last_function_param, list):
-                        constrains_satisfied = True
-                        bool_condition_list = last_function_param
-                        for i in range(len(bool_condition_list)):
-                            print(['set',firm['params'][i],params[i]])
-                            print(bool_condition_list[i])
-                            print(['jnz','label_not_met'])
-
-
-                        print('call',function_name)
-                        if constrains_satisfied:
-                            #Execute
-                            for insn in firm['body']:
-                                print('???',insn)
-                                for param in firm['params'][:-1]:
-                                    insn = insn.replace(firm['params'][i], str(params[i]))
-                                print('???2',insn)
-
-                                print('>', insn)
-
-                            print('Has boolean stuff')
-
-                    if len(params) == len(firm['params'] ):
-                        for param in firm['params']:
-                            if not isinstance(param ,str):
-                                continue
-                            print('PAR',param)
-
-
-        return []
-
-    def expr(self,token):
-        return token[0]
-
-    def arith_sub(self, token):
-        return ['sub',token[0], token[1]]
-
-    def arith_add(self, token):
-        return '{} + {}'.format(token[0],token[1])
-
-    def arith_mul(self,token):
-        return '({} * {})'.format(token[0],token[1])
-
-    def bool_gt(self,token):
-        return ['cmp_gt',token[0],token[1]]
-        return '{} > {}'.format(token[0],token[1])
-
-    def bool_lt(self,token):
-        return '{} < {}'.format(token[0],token[1])
-
-    def boolean_expr(self,token):
+    def function_body(self, token):
         return token
 
-    def identifier(self,token):
-        return token[0].value
+    def return_statement(self, token):
+        return token[0]
+
+    def factor_(self, token):
+        if len(token) == 2 and isinstance(token[1], my_ast.FunctionCall):
+            token[1].name = token[0].name
+            return token[1]
+        else:
+            return token[0]
+
+    def function_call_args(self, args):
+        print('yyyyyy', args)
+        return my_ast.FunctionCall(self.builder, self.module, '<un-named>', args[0] )
+
+    def expr(self, children):
+        print('expr', children)
+
+        if len(children) == 2:
+            lhs = children[0]
+            rhs_expr = children[1]
+            rhs_expr.left = lhs
+            return rhs_expr
+        else:
+            return children[0]
+
+    def arith_sub(self, children):
+        rhs = children[0]
+        return my_ast.Sub(self.builder, self.module, None, rhs)
+
+    def arith_add(self, children):
+        print('>>>>cc', children)
+
+        rhs = children[0]
+        return my_ast.Sum(self.builder, self.module, None, rhs)
+
+    def arglist(self, token):
+        return token
+
+    def fn_arglist(self,token):
+        return token
+
+    def more_args(self, token):
+        return token
+
+    def bool_neq(self, token):
+        return ['and',token]
+
+
+
+    def factor(self, token):
+        return token[0]
+
+    def arguments(self,token):
+        return token[0]
+
+    def term(self,token):
+        return token[0]
+
+    def term_(self,token):
+        return token[0]
+
+    def identifier(self, token):
+        return my_ast.Identifier(self.builder, self.module, token[0].value)
+
+    def number(self,node):
+        return node[0]
+
+    def number_(self,token):
+        print('>>>',token[0].value)
+        return my_ast.Number(self.builder, self.module, token[0].value)
+
+
+
 
 
 if __name__ == '__main__':
@@ -130,16 +145,32 @@ if __name__ == '__main__':
 
     print('starting')
 
-    grammar = Lark( toylang_grammar,  debug=True)
+    grammar = Lark(toylang_grammar)
     #with open('examples/fibo.toy', 'r') as myfile:
-    with open('examples/dot_product.toy', 'r') as myfile:
+    with open('examples/simple1.toy', 'r') as myfile:
         text = myfile.read()
 
     parse_tree = grammar.parse(text)
 
     print('parsing done')
 
-    exit()
+    #exit()
 
-    TreeToJson().transform(parse_tree)
+    codegen = CodeGen()
+
+    module = codegen.module
+    builder = codegen.builder
+
+
+
+
+
+
+    printf = codegen.printf
+
+    ast_generator = TreeToAst(module, builder, printf)
+
+    ast_generator.transform(parse_tree)
+
+    print(module)
 

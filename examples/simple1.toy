@@ -1,0 +1,10 @@
+
+# A very simple example
+
+suma(A):
+  A+1.
+
+
+main():
+    suma(1).
+

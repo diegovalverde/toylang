@@ -12,9 +12,11 @@
 
     start: (_NEWLINE|function)*
 
-    function: NAME "(" [arglist] ")" ":" _NEWLINE? function_body
+    function: identifier "(" [fn_arglist] ")" ":" _NEWLINE? function_body
 
-    function_body: (expr _NEWLINE)* expr "." _NEWLINE?
+    function_body: (expr _NEWLINE)* return_statement "." _NEWLINE?
+
+    return_statement: expr
 
     ///////////////////////////////////////////
     // Arithmetic Expressions
@@ -22,8 +24,8 @@
 
     expr: term [expr_]
 
-    expr_:    "+" term [expr_]
-            | "-" term [expr_]
+    expr_:    "+" term [expr_]  -> arith_add
+            | "-" term [expr_]  -> arith_sub
 
     term: factor [term_]
 
@@ -41,19 +43,25 @@
                     | ">" factor [boolean_expr_]
                     | "<" factor [boolean_expr_]
                     | "==" factor [boolean_expr_]
-                    | "!=" factor [boolean_expr_]
+                    | "!=" factor [boolean_expr_] -> bool_neq
 
     ///////////////////////////////////////////
 
 
-    factor: "(" expr ")" |  list  | number | NAME [arguments] | STRING
+    factor: "(" expr ")" |  list  | number | factor_ | STRING
 
     list: "[" [arglist] "]"
-           | NAME "~" NAME
+           | identifier "~" identifier
 
-    arguments: "[" arglist "]" | "(" arglist ")"
+    factor_: identifier [arguments]
+
+
+    arguments: "[" arglist "]"  -> array_index
+              | "(" arglist ")" -> function_call_args
 
     arglist: expr [more_args] ["|" boolean_expr]
+
+    fn_arglist: expr [more_args] ["|" boolean_expr]
 
     more_args:  "," expr [more_args]
 
@@ -61,6 +69,8 @@
     ///////////////////////////////////////////
     //Terminal Definitions
     ///////////////////////////////////////////
+
+    identifier: NAME
 
     number: "-" number_
             | number_
