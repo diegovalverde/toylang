@@ -2,6 +2,15 @@ from lark import Lark, Transformer
 import llvm_ast as my_ast
 from codegen import CodeGen
 import argparse
+import collections
+
+
+def flatten(x):
+    if isinstance(x, collections.Iterable):
+        return [a for i in x for a in flatten(i)]
+    else:
+        return [x]
+
 
 class TreeToAst(Transformer):
 
@@ -12,10 +21,6 @@ class TreeToAst(Transformer):
         self.module = module        # The compilation unit
         self.builder = builder      # The LLVM builder
         self.printf = printf        # Special library functions
-
-    def get_free_reg(self):
-        self.reg_idx +=1
-        return 'r{}'.format(self.reg_idx)
 
     def get_main(self):
         for fn in self.module.functions:
@@ -49,7 +54,7 @@ class TreeToAst(Transformer):
 
             return self.get_main()
         else:
-            fn_arguments = [a.name for a in tree[1]]
+            fn_arguments = [a.name for a in flatten(tree[1])]
             fn_body = tree[2]
 
             # create the function
@@ -81,6 +86,10 @@ class TreeToAst(Transformer):
         else:
             return children[0]
 
+    def arith_mul(self, children):
+        rhs = children[0]
+        return my_ast.Mul(self.builder, self.module, None, rhs)
+
     def arith_sub(self, children):
         rhs = children[0]
         return my_ast.Sub(self.builder, self.module, None, rhs)
@@ -109,11 +118,17 @@ class TreeToAst(Transformer):
     def arguments(self,token):
         return token[0]
 
-    def term(self,token):
-        return token[0]
+    def term(self, children):
+        if len(children) == 2:
+            lhs = children[0]
+            rhs_expr = children[1]
+            rhs_expr.left = lhs
+            return rhs_expr
+        else:
+            return children[0]
 
-    def term_(self,token):
-        return token[0]
+    def term_(self, children):
+            return children[0]
 
     def identifier(self, token):
         return my_ast.Identifier(self.builder, self.module, token[0].value)

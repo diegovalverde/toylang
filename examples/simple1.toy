@@ -1,10 +1,13 @@
 
 # A very simple example
 
-suma(A):
+sum_a(A):
   A+1.
+
+foo(x, y):
+    2 * x + (y - 3).
 
 
 main():
-    suma(1).
+    sum_a(2).
 

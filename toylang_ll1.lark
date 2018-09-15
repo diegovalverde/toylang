@@ -29,7 +29,7 @@
 
     term: factor [term_]
 
-    term_:    "*" factor [term_]
+    term_:    "*" factor [term_] -> arith_mul
             | "/" factor [term_]
 
     ///////////////////////////////////////////

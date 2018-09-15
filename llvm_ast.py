@@ -7,6 +7,9 @@ class Number:
         self.module = module
         self.value = value
 
+    def set_builder(self, builder):
+        self.builder = builder
+
     def eval(self):
         i = ir.Constant(ir.IntType(32), int(self.value))
         return i
@@ -17,7 +20,10 @@ class Identifier:
         self.builder = builder
         self.module = module
         self.name = name
+        self.debug = True
 
+    def set_builder(self, builder):
+        self.builder = builder
 
     def eval(self):
         # Check the current function that we are building
@@ -26,7 +32,7 @@ class Identifier:
                 return arg
 
         # Todo check is already allocated symbol in the Symbol Table
-
+        
         # Not an argument, then  must be something new
         allocation = self.builder.alloca(ir.IntType(32), name=self.name)
         return self.builder.load(allocation)
@@ -42,15 +48,18 @@ class BinaryOp:
 
     def set_builder(self,builder):
         self.builder = builder
-        self.left.builder = builder
-        self.right.builder = builder
+        self.left.set_builder(builder)
+        self.right.set_builder(builder)
 
 
 class Sum(BinaryOp):
     def eval(self):
-        i = self.builder.add(self.left.eval(), self.right.eval())
-        print(i)
-        return i
+        return self.builder.add(self.left.eval(), self.right.eval())
+
+
+class Mul(BinaryOp):
+    def eval(self):
+        return self.builder.mul(self.left.eval(), self.right.eval())
 
 
 class Sub(BinaryOp):
