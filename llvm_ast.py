@@ -68,10 +68,7 @@ class FunctionCall:
 
     def eval(self):
         for fn in self.module.functions:
-            print('SSSSSS', fn.name, self.name)
             if fn.name == self.name:
-                
-                print('Calling!!!', self.args)
                 return self.builder.call(fn, [a.eval() for a in self.args])
 
         return None
@@ -94,24 +91,14 @@ class Function:
         for i in range(len(self.args)):
             fn.args[i].name = self.args[i]
 
-        print(fn.args)
-
         ret_stmt = self.fn_body[-1]
-        print(ret_stmt)
-
 
         # Now implement the function
         block = fn.append_basic_block(name="entry")
         builder = ir.IRBuilder(block)
-
-        print(builder)
         ret_stmt.set_builder( builder )
 
         builder.ret(ret_stmt.eval())
-
-
-        print(self.module)
-
         return fn
 
 
