@@ -15,7 +15,7 @@ def flatten(x):
 class TreeToAst(Transformer):
 
     def __init__(self, module, builder, printf):
-        self.symbol_map = {}
+        self.symbol_table = {}
         self.stack = []
 
         self.module = module        # The compilation unit
@@ -75,9 +75,11 @@ class TreeToAst(Transformer):
             return token[0]
 
     def function_call_args(self, args):
-        return my_ast.FunctionCall(self.builder, self.module, '<un-named>', args[0] )
+
+        return my_ast.FunctionCall(self.builder, self.module, '<un-named>', flatten(args) )
 
     def expr(self, children):
+
         if len(children) == 2:
             lhs = children[0]
             rhs_expr = children[1]
@@ -88,19 +90,19 @@ class TreeToAst(Transformer):
 
     def arith_mul(self, children):
         rhs = children[0]
-        return my_ast.Mul(self.builder, self.module, None, rhs)
+        return my_ast.Mul(self.builder, self.module, None, rhs, self.symbol_table)
 
     def arith_sub(self, children):
         rhs = children[0]
-        return my_ast.Sub(self.builder, self.module, None, rhs)
+        return my_ast.Sub(self.builder, self.module, None, rhs, self.symbol_table)
 
     def arith_add(self, children):
         rhs = children[0]
-        return my_ast.Sum(self.builder, self.module, None, rhs)
+        return my_ast.Sum(self.builder, self.module, None, rhs, self.symbol_table)
 
     def lhs_assignment(self, children):
         rhs = children[0]
-        return my_ast.Assignment(self.builder, self.module, None, rhs)
+        return my_ast.Assignment(self.builder, self.module, None, rhs, self.symbol_table)
 
     def arglist(self, token):
         return token
@@ -135,7 +137,7 @@ class TreeToAst(Transformer):
             return children[0]
 
     def identifier(self, token):
-        return my_ast.Identifier(self.builder, self.module, token[0].value)
+        return my_ast.Identifier(self.builder, self.module, token[0].value, self.symbol_table)
 
     def number(self,node):
         return node[0]
@@ -148,42 +150,51 @@ class TreeToAst(Transformer):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Compile a program to LLVM IR.')
-    parser.add_argument('input_path', help='Path to input file')
-    args = parser.parse_args()
+    """
+    ======= M A I N =====
+    """
+    try:
+        parser = argparse.ArgumentParser(description='Compile a program to LLVM IR.')
+        parser.add_argument('input_path', help='Path to input file')
+        args = parser.parse_args()
 
 
-    toylang_grammar = ''
-    text = ''
+        toylang_grammar = ''
+        text = ''
 
-    with open('toylang_ll1.lark', 'r') as myfile:
-        toylang_grammar = myfile.read()
+        with open('toylang_ll1.lark', 'r') as myfile:
+            toylang_grammar = myfile.read()
 
-    print('starting')
+        print('starting')
 
-    grammar = Lark(toylang_grammar)
+        grammar = Lark(toylang_grammar)
 
-    with open(args.input_path, 'r') as myfile:
-        text = myfile.read()
+        with open(args.input_path, 'r') as myfile:
+            text = myfile.read()
 
-    parse_tree = grammar.parse(text)
+        parse_tree = grammar.parse(text)
 
-    print('parsing done')
+        print('parsing done')
 
 
-    codegen = CodeGen()
+        codegen = CodeGen()
 
-    module = codegen.module
-    builder = codegen.builder
+        module = codegen.module
+        builder = codegen.builder
 
-    printf = codegen.printf
+        printf = codegen.printf
 
-    ast_generator = TreeToAst(module, builder, printf)
+        ast_generator = TreeToAst(module, builder, printf)
 
-    ast_generator.transform(parse_tree)
+        ast_generator.transform(parse_tree)
 
-    print(module)
+        print(module)
 
-    codegen.create_ir()
-    codegen.save_ir("output.ll")
+        print('SYMBOL TABLE', ast_generator.symbol_table)
+
+        codegen.create_ir()
+        codegen.save_ir("output.ll")
+
+    except Exception as e:
+        print('Compilation error: {}'.format(e))
 
