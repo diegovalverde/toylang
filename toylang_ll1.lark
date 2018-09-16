@@ -26,6 +26,7 @@
 
     expr_:    "+" term [expr_]  -> arith_add
             | "-" term [expr_]  -> arith_sub
+            | "=" term  [expr_] -> lhs_assignment
 
     term: factor [term_]
 

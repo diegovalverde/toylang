@@ -32,7 +32,7 @@ class Identifier:
                 return arg
 
         # Todo check is already allocated symbol in the Symbol Table
-        
+
         # Not an argument, then  must be something new
         allocation = self.builder.alloca(ir.IntType(32), name=self.name)
         return self.builder.load(allocation)
@@ -66,6 +66,15 @@ class Sub(BinaryOp):
     def eval(self):
         i = self.builder.sub(self.left.eval(), self.right.eval())
         return i
+
+
+class Assignment(BinaryOp):
+    def eval(self):
+        allocation = self.builder.alloca(ir.IntType(32), name=self.left.name)
+        # Evaluate whatever was on the RHS
+        rhs_result = self.right.eval()
+        # Store it in our variable
+        return self.builder.store(rhs_result, allocation)
 
 
 class FunctionCall:

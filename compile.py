@@ -98,6 +98,10 @@ class TreeToAst(Transformer):
         rhs = children[0]
         return my_ast.Sum(self.builder, self.module, None, rhs)
 
+    def lhs_assignment(self, children):
+        rhs = children[0]
+        return my_ast.Assignment(self.builder, self.module, None, rhs)
+
     def arglist(self, token):
         return token
 
