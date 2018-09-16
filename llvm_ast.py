@@ -33,16 +33,17 @@ class Identifier:
             if arg.name == self.name:
                 return arg
 
+        symbol_name = '{}__{}'.format(self.builder.function.name, self.name)
         # Now check to see if it is a local (function scope) variable
-        if self.name in self.symbol_table:
-            return self.builder.load(self.symbol_table[self.name])
+        if symbol_name in self.symbol_table:
+            return self.builder.load(self.symbol_table[symbol_name])
 
 
         # Todo check is already allocated symbol in the Symbol Table
 
         # Not an argument, then  must be something new
         allocation = self.builder.alloca(ir.IntType(32), name=self.name)
-        self.symbol_table[self.name] = allocation
+        self.symbol_table[symbol_name] = allocation
         return self.builder.load(allocation)
 
 
@@ -80,11 +81,13 @@ class Assignment(BinaryOp):
     def eval(self):
         name = self.left.name
 
-        if name in self.symbol_table:
+        symbol_name = '{}__{}'.format(self.builder.function.name, name)
+        
+        if symbol_name in self.symbol_table:
             raise Exception('Cannot re-assign to {}. Variables are Immutable'.format(name))
 
         allocation = self.builder.alloca(ir.IntType(32), name=name)
-        self.symbol_table[name] = allocation
+        self.symbol_table[symbol_name] = allocation
         # Evaluate whatever was on the RHS
         rhs_result = self.right.eval()
         # Store it in our variable
