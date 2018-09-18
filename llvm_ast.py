@@ -15,12 +15,83 @@ class Number:
         return i
 
 
+class ArrayLiteral:
+    """
+    Essentially a NULL terminated linked list
+    """
+    def __init__(self, builder, module, name, symbol_table, elements):
+        self.builder = builder
+        self.module = module
+        self.name = name
+        self.symbol_table = symbol_table
+        self.elements = elements
+
+    def eval(self):
+        symbol_name = '{}__ARRAY__{}'.format(self.builder.function.name, self.name)
+
+        # Use this: Immutable
+
+        int32 = ir.IntType(32)
+        null = 0
+        # A = ir.Constant.literal_array((ir.Constant(int32, 1), ir.Constant(int32, 2), ir.Constant(int32, 3)))
+        # then
+        # value = self.builder.extract_value(A,3)
+
+        # type, i32 * head, i32 * tail
+        t_node = ir.LiteralStructType((ir.IntType(8), int32, ir.PointerType(32)))
+        #t_node type is: { float*, i32 }*.
+        # That is, %t_node is a pointer to a structure containing a pointer to a byte, int32  and an i32*.
+
+        # create a pointer to the head
+        p_type = ir.PointerType(t_node)
+        p = self.builder.alloca(p_type)
+
+        # fty = ir.FunctionType(ir.IntType(32), [ir.IntType(32), ir.IntType(32)])
+        # args = (self.elements[0].eval(), self.elements[1].eval())
+        # add = self.builder.asm(fty, "mov $2, $0\nadd $1, $0", "=r,r,r",args, '',name="asm_add")
+
+        print(self.module)
+
+        # Allocate n elements
+        allocation = self.builder.alloca(t_node, size=len(self.elements))
+
+        #print(symbol_name, self.module)
+
+        for i in range(len(self.elements)):
+            idx = ir.Constant(int32, i)
+            print('2',symbol_name, self.module)
+
+            p_element_type = self.builder.alloca(ir.PointerType(8))
+            p_value = self.builder.gep(allocation, [idx, idx])
+            print('>>>>>>>',p_value, symbol_name, self.module)
+            p_ptr_next = self.builder.gep(allocation, [ir.Constant(int32, 1)])
+            print(symbol_name, self.module)
+            self.builder.store(ir.Constant(ir.IntType(8), self.elements[i].eval()),p_value)
+
+            print('.......',symbol_name, self.module)
+
+            if i + 1 == len(self.elements):
+                self.builder.store(p_ptr_next, ir.Constant(p_type, null))
+            else:
+                idx_next = ir.Constant(p_type, i+1)
+                p_next = self.builder.gep(allocation, idx_next)
+                self.builder.store(p_ptr_next, ir.Constant(p_type, p_next))
+
+            #print(e)
+
+
+        #p = self.builder.alloca(p_type, name=symbol_name, )
+
+
+        #a = ir.ArrayType(ir.IntType(32), self.size)
+        return allocation
+
+
 class Identifier:
     def __init__(self, builder, module, name, symbol_table):
         self.builder = builder
         self.module = module
         self.name = name
-        self.debug = True
         self.symbol_table = symbol_table
 
     def set_builder(self, builder):
@@ -82,7 +153,7 @@ class Assignment(BinaryOp):
         name = self.left.name
 
         symbol_name = '{}__{}'.format(self.builder.function.name, name)
-        
+
         if symbol_name in self.symbol_table:
             raise Exception('Cannot re-assign to {}. Variables are Immutable'.format(name))
 
@@ -107,6 +178,7 @@ class FunctionCall:
 
     def eval(self):
         found = False
+
         for fn in self.module.functions:
             if fn.name == self.name:
                 return self.builder.call(fn, [a.eval() for a in self.args])
@@ -161,14 +233,13 @@ class Print:
 
         # Declare argument list
         voidptr_ty = ir.IntType(8).as_pointer()
-        fmt = "%i \n\0"
+        fmt = "Hello %i \n\0"
         c_fmt = ir.Constant(ir.ArrayType(ir.IntType(8), len(fmt)),
                             bytearray(fmt.encode("utf8")))
-        global_fmt = ir.GlobalVariable(self.module, c_fmt.type, name="fstr")
-        global_fmt.linkage = 'internal'
-        global_fmt.global_constant = True
-        global_fmt.initializer = c_fmt
-        fmt_arg = self.builder.bitcast(global_fmt, voidptr_ty)
 
-        # Call Print Function
-        self.builder.call(self.printf, [fmt_arg, value])
+        local_fmt = self.builder.alloca(c_fmt.type, name="fstr")
+        self.builder.store(c_fmt, local_fmt)
+
+        fmt_arg = self.builder.bitcast(local_fmt, voidptr_ty)
+
+        return self.builder.call(self.printf, [fmt_arg, value])

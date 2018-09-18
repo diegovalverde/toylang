@@ -14,15 +14,21 @@
 
     function: identifier "(" [fn_arglist] ")" ":" _NEWLINE? function_body
 
-    function_body: (expr _NEWLINE)* return_statement "." _NEWLINE?
+    function_body: (statement _NEWLINE)* return_statement "." _NEWLINE?
 
     return_statement: expr
+
+
+    statement: "print" "(" expr ")" -> print_action
+                | expr
+
 
     ///////////////////////////////////////////
     // Arithmetic Expressions
     ///////////////////////////////////////////
 
     expr: term [expr_]
+
 
     expr_:    "+" term [expr_]  -> arith_add
             | "-" term [expr_]  -> arith_sub
@@ -49,9 +55,9 @@
     ///////////////////////////////////////////
 
 
-    factor: "(" expr ")" |  list  | number | factor_ | STRING
+    factor: "(" expr ")" |  array  | number | factor_ | STRING
 
-    list: "[" [arglist] "]"
+    array: "[" [arglist] "]"
            | identifier "~" identifier
 
     factor_: identifier [arguments]

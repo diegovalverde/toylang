@@ -64,6 +64,10 @@ class TreeToAst(Transformer):
     def function_body(self, token):
         return token
 
+    def statement(self,token):
+        print('statement', token)
+        return token[0]
+
     def return_statement(self, token):
         return token[0]
 
@@ -79,7 +83,7 @@ class TreeToAst(Transformer):
         return my_ast.FunctionCall(self.builder, self.module, '<un-named>', flatten(args) )
 
     def expr(self, children):
-
+        print('expr',children)
         if len(children) == 2:
             lhs = children[0]
             rhs_expr = children[1]
@@ -104,6 +108,13 @@ class TreeToAst(Transformer):
         rhs = children[0]
         return my_ast.Assignment(self.builder, self.module, None, rhs, self.symbol_table)
 
+    def array(self, tokens):
+        elements = flatten(tokens)
+        print('!!!! ARRAY',elements)
+        # A Null terminated linked list
+
+        return my_ast.ArrayLiteral(self.builder, self.module, '<un-named>', self.symbol_table, elements)
+
     def arglist(self, token):
         return token
 
@@ -115,6 +126,10 @@ class TreeToAst(Transformer):
 
     def bool_neq(self, token):
         return ['and',token]
+
+    def print_action(self, token):
+
+        return my_ast.Print(self.builder, self.module, self.printf, token[0])
 
 
 
@@ -153,48 +168,48 @@ if __name__ == '__main__':
     """
     ======= M A I N =====
     """
-    try:
-        parser = argparse.ArgumentParser(description='Compile a program to LLVM IR.')
-        parser.add_argument('input_path', help='Path to input file')
-        args = parser.parse_args()
+    #try:
+    parser = argparse.ArgumentParser(description='Compile a program to LLVM IR.')
+    parser.add_argument('input_path', help='Path to input file')
+    args = parser.parse_args()
 
 
-        toylang_grammar = ''
-        text = ''
+    toylang_grammar = ''
+    text = ''
 
-        with open('toylang_ll1.lark', 'r') as myfile:
-            toylang_grammar = myfile.read()
+    with open('toylang_ll1.lark', 'r') as myfile:
+        toylang_grammar = myfile.read()
 
-        print('starting')
+    print('starting')
 
-        grammar = Lark(toylang_grammar)
+    grammar = Lark(toylang_grammar)
 
-        with open(args.input_path, 'r') as myfile:
-            text = myfile.read()
+    with open(args.input_path, 'r') as myfile:
+        text = myfile.read()
 
-        parse_tree = grammar.parse(text)
+    parse_tree = grammar.parse(text)
 
-        print('parsing done')
+    print('parsing done')
 
 
-        codegen = CodeGen()
+    codegen = CodeGen()
 
-        module = codegen.module
-        builder = codegen.builder
+    module = codegen.module
+    builder = codegen.builder
 
-        printf = codegen.printf
+    printf = codegen.printf
 
-        ast_generator = TreeToAst(module, builder, printf)
+    ast_generator = TreeToAst(module, builder, printf)
 
-        ast_generator.transform(parse_tree)
+    ast_generator.transform(parse_tree)
 
-        print(module)
+    print(module)
 
-        print('SYMBOL TABLE', ast_generator.symbol_table)
+    print('SYMBOL TABLE', ast_generator.symbol_table)
 
-        codegen.create_ir()
-        codegen.save_ir("output.ll")
+    codegen.create_ir()
+    codegen.save_ir("output.ll")
 
-    except Exception as e:
-        print('Compilation error: {}'.format(e))
+    #except Exception as e:
+    #    print('Compilation error: {}'.format(e))
 
