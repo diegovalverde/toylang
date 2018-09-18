@@ -7,6 +7,9 @@ class Number:
         self.module = module
         self.value = value
 
+    def __repr__(self):
+        return 'Number({})'.format(self.value)
+
     def set_builder(self, builder):
         self.builder = builder
 
@@ -133,6 +136,9 @@ class BinaryOp:
 
 
 class Sum(BinaryOp):
+    def __repr__(self):
+        return 'Sum({} + {})'.format(self.left, self.right)
+
     def eval(self):
         return self.builder.add(self.left.eval(), self.right.eval())
 

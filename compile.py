@@ -12,6 +12,10 @@ def flatten(x):
         return [x]
 
 
+def remove_invalid(L):
+    return [x for x in L if x is not None]
+
+
 class TreeToAst(Transformer):
 
     def __init__(self, module, builder, printf):
@@ -65,7 +69,6 @@ class TreeToAst(Transformer):
         return token
 
     def statement(self,token):
-        print('statement', token)
         return token[0]
 
     def return_statement(self, token):
@@ -82,8 +85,9 @@ class TreeToAst(Transformer):
 
         return my_ast.FunctionCall(self.builder, self.module, '<un-named>', flatten(args) )
 
-    def expr(self, children):
-        print('expr',children)
+    def expr(self, token):
+        children = remove_invalid(flatten(token))
+
         if len(children) == 2:
             lhs = children[0]
             rhs_expr = children[1]
@@ -96,22 +100,45 @@ class TreeToAst(Transformer):
         rhs = children[0]
         return my_ast.Mul(self.builder, self.module, None, rhs, self.symbol_table)
 
-    def arith_sub(self, children):
-        rhs = children[0]
-        return my_ast.Sub(self.builder, self.module, None, rhs, self.symbol_table)
+    def arith_sub(self, token):
+        children = remove_invalid(flatten(token))
 
-    def arith_add(self, children):
-        print('arith_add', children)
-        rhs = children[0]
-        return my_ast.Sum(self.builder, self.module, None, rhs, self.symbol_table)
+        if len(children) == 0:
+            return None
+        elif len(children) == 1:
+            return my_ast.Sub(self.builder, self.module, None, children[0], self.symbol_table)
+        elif len(children) == 2:
+            children[1].left = children[0]
+            return my_ast.Sub(self.builder, self.module, None, children[1], self.symbol_table)
+        else:
+            return None
+
+    def arith_add(self, token):
+        children = remove_invalid(flatten(token))
+
+        if len(children) == 0:
+            return None
+        elif len(children) == 1:
+            return my_ast.Sum(self.builder, self.module, None, children[0], self.symbol_table)
+        elif len(children) == 2:
+            children[1].left = children[0]
+            return my_ast.Sum(self.builder, self.module, None,children[1], self.symbol_table)
+        else:
+            return None
 
     def lhs_assignment(self, children):
         rhs = children[0]
         return my_ast.Assignment(self.builder, self.module, None, rhs, self.symbol_table)
 
+    def expr_rhs(self, tokens):
+        if len(tokens) == 1:
+            return tokens[0]
+        else:
+            return None
+
     def array(self, tokens):
         elements = flatten(tokens)
-        print('!!!! ARRAY',elements)
+
         # A Null terminated linked list
 
         return my_ast.ArrayLiteral(self.builder, self.module, '<un-named>', self.symbol_table, elements)
@@ -129,13 +156,10 @@ class TreeToAst(Transformer):
         return ['and',token]
 
     def print_action(self, token):
-        print('print_action', token)
         if len(token) == 1:
             return my_ast.Print(self.builder, self.module, self.printf, token[0], [])
         else:
             return my_ast.Print(self.builder, self.module, self.printf, token[0], token[1])
-
-
 
     def factor(self, token):
         return token[0]
@@ -159,7 +183,6 @@ class TreeToAst(Transformer):
         return my_ast.Identifier(self.builder, self.module, token[0].value, self.symbol_table)
 
     def string(self, token):
-        print('string',token)
         return my_ast.String(self.builder, self.module, token[0])
 
     def number(self,node):
@@ -210,10 +233,6 @@ if __name__ == '__main__':
     ast_generator = TreeToAst(module, builder, printf)
 
     ast_generator.transform(parse_tree)
-
-    print(module)
-
-    print('SYMBOL TABLE', ast_generator.symbol_table)
 
     codegen.create_ir()
     codegen.save_ir("output.ll")
