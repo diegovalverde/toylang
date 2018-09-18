@@ -128,8 +128,11 @@ class TreeToAst(Transformer):
         return ['and',token]
 
     def print_action(self, token):
-
-        return my_ast.Print(self.builder, self.module, self.printf, token[0])
+        print('print_action', token)
+        if len(token) == 1:
+            return my_ast.Print(self.builder, self.module, self.printf, token[0], [])
+        else:
+            return my_ast.Print(self.builder, self.module, self.printf, token[0], token[1])
 
 
 
@@ -153,6 +156,10 @@ class TreeToAst(Transformer):
 
     def identifier(self, token):
         return my_ast.Identifier(self.builder, self.module, token[0].value, self.symbol_table)
+
+    def string(self, token):
+        print('string',token)
+        return my_ast.String(self.builder, self.module, token[0])
 
     def number(self,node):
         return node[0]

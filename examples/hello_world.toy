@@ -1,13 +1,12 @@
-
+#############################################################
+#
+# Hello world example.
+# To compile and run using CLANG do:
+# python compile.py examples/hello_world.toy
+# llc -filetype=obj output.ll && clang output.o && ./a.out
+#
+#############################################################
 
 main():
-    # print 4
-    x = 1 + 3
-    print(x)
-
-
-    print( 10 )
-    #print( 2 * x + 2)
-
-    #return something (print is not valid return statement)
+    print('Hello world')
     1.

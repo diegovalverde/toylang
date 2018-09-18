@@ -221,25 +221,37 @@ class Function:
         return fn
 
 
+class String:
+    def __init__(self, builder, module, fmt_str):
+        self.builder = builder
+        self.module = module
+        self.fmt_str = '{}\n\0'.format(fmt_str)
+
+    def eval(self):
+        return ir.Constant(ir.ArrayType(ir.IntType(8), len(self.fmt_str)),
+                           bytearray(self.fmt_str.encode("utf8")))
+
+
 class Print:
-    def __init__(self, builder, module, printf, value):
+    def __init__(self, builder, module, printf, fmt_str, arg_list):
         self.builder = builder
         self.module = module
         self.printf = printf
-        self.value = value
+        self.fmt_str = fmt_str
+        self.arg_list = arg_list
 
     def eval(self):
-        value = self.value.eval()
+        values = [v.eval() for v in self.arg_list]
+        c_fmt = self.fmt_str.eval()
 
-        # Declare argument list
         voidptr_ty = ir.IntType(8).as_pointer()
-        fmt = "Hello %i \n\0"
-        c_fmt = ir.Constant(ir.ArrayType(ir.IntType(8), len(fmt)),
-                            bytearray(fmt.encode("utf8")))
 
         local_fmt = self.builder.alloca(c_fmt.type, name="fstr")
         self.builder.store(c_fmt, local_fmt)
 
         fmt_arg = self.builder.bitcast(local_fmt, voidptr_ty)
 
-        return self.builder.call(self.printf, [fmt_arg, value])
+        if len(values) == 1:
+            return self.builder.call(self.printf, [fmt_arg, values[0]])
+        else:
+            return self.builder.call(self.printf, [fmt_arg])
