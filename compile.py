@@ -101,6 +101,7 @@ class TreeToAst(Transformer):
         return my_ast.Sub(self.builder, self.module, None, rhs, self.symbol_table)
 
     def arith_add(self, children):
+        print('arith_add', children)
         rhs = children[0]
         return my_ast.Sum(self.builder, self.module, None, rhs, self.symbol_table)
 

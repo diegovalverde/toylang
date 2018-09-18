@@ -1,0 +1,8 @@
+
+
+add_me(x,y):
+    x+y.
+
+main():
+    print('x = %i', add_me(1,2))
+    1.
