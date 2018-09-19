@@ -18,13 +18,14 @@ def remove_invalid(L):
 
 class TreeToAst(Transformer):
 
-    def __init__(self, module, builder, printf):
+    def __init__(self, module, builder, printf, debug=False):
         self.symbol_table = {}
         self.stack = []
 
         self.module = module        # The compilation unit
         self.builder = builder      # The LLVM builder
         self.printf = printf        # Special library functions
+        self.debug = debug
 
     def get_main(self):
         for fn in self.module.functions:
@@ -38,7 +39,10 @@ class TreeToAst(Transformer):
     def suite(self,token):
         return token[0]
 
-    def stmt(self,token):
+    def statement(self, token):
+        if self.debug:
+            print(token)
+
         return token
 
     def paramlist(self, token):
@@ -87,6 +91,10 @@ class TreeToAst(Transformer):
 
     def expr(self, token):
         children = remove_invalid(flatten(token))
+
+        if self.debug:
+            print(children)
+
 
         if len(children) == 2:
             lhs = children[0]
@@ -198,6 +206,7 @@ if __name__ == '__main__':
     #try:
     parser = argparse.ArgumentParser(description='Compile a program to LLVM IR.')
     parser.add_argument('input_path', help='Path to input file')
+    parser.add_argument('--debug', action='store_true', default=False, help='For tool debugging purposes only')
     args = parser.parse_args()
 
 
@@ -226,7 +235,7 @@ if __name__ == '__main__':
 
     printf = codegen.printf
 
-    ast_generator = TreeToAst(module, builder, printf)
+    ast_generator = TreeToAst(module, builder, printf, debug=args.debug)
 
     ast_generator.transform(parse_tree)
 

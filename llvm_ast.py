@@ -97,6 +97,9 @@ class Identifier:
         self.name = name
         self.symbol_table = symbol_table
 
+    def __repr__(self):
+        return 'Identifier({})'.format(self.name)
+
     def set_builder(self, builder):
         self.builder = builder
 
@@ -246,7 +249,10 @@ class String:
     def __init__(self, builder, module, fmt_str):
         self.builder = builder
         self.module = module
-        self.fmt_str = '{}\n\0'.format(fmt_str)
+        self.fmt_str = '{}\n\0'.format(fmt_str[1:-1])
+
+    def __repr__(self):
+        return 'String({})'.format(self.fmt_str)
 
     def eval(self):
         return ir.Constant(ir.ArrayType(ir.IntType(8), len(self.fmt_str)),

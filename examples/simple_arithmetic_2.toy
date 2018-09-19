@@ -16,7 +16,7 @@ main():
     z = 2 * a + (b - 3)
     print('4 == %i', z)
 
-
+    # Now one with division
     w = z*2 + x/2
     print('11 == %i',w)
 
