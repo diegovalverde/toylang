@@ -137,22 +137,37 @@ class BinaryOp:
 
 class Sum(BinaryOp):
     def __repr__(self):
-        return 'Sum({} + {})'.format(self.left, self.right)
+        return 'Sum({} , {})'.format(self.left, self.right)
 
     def eval(self):
         return self.builder.add(self.left.eval(), self.right.eval())
 
 
 class Mul(BinaryOp):
+    def __repr__(self):
+        return 'Mul({} , {})'.format(self.left, self.right)
+
     def eval(self):
         return self.builder.mul(self.left.eval(), self.right.eval())
 
 
 class Sub(BinaryOp):
+    def __repr__(self):
+        return 'Sub({} , {})'.format(self.left, self.right)
+
     def eval(self):
         i = self.builder.sub(self.left.eval(), self.right.eval())
         return i
 
+
+class Div(BinaryOp):
+    def __repr__(self):
+        return 'Div({} , {})'.format(self.left, self.right)
+
+    def eval(self):
+        i = self.builder.div(self.left.eval(), self.right.eval())
+        return i
+    
 
 class Assignment(BinaryOp):
     def eval(self):

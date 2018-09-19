@@ -100,31 +100,27 @@ class TreeToAst(Transformer):
         rhs = children[0]
         return my_ast.Mul(self.builder, self.module, None, rhs, self.symbol_table)
 
-    def arith_sub(self, token):
+    def bin_arith_op(self,token, ast_op):
         children = remove_invalid(flatten(token))
 
         if len(children) == 0:
             return None
         elif len(children) == 1:
-            return my_ast.Sub(self.builder, self.module, None, children[0], self.symbol_table)
+            return ast_op(self.builder, self.module, None, children[0], self.symbol_table)
         elif len(children) == 2:
             children[1].left = children[0]
-            return my_ast.Sub(self.builder, self.module, None, children[1], self.symbol_table)
+            return ast_op(self.builder, self.module, None, children[1], self.symbol_table)
         else:
             return None
+
+    def arith_sub(self, token):
+        return self.bin_arith_op(token, my_ast.Sub)
 
     def arith_add(self, token):
-        children = remove_invalid(flatten(token))
+        return self.bin_arith_op(token, my_ast.Sum)
 
-        if len(children) == 0:
-            return None
-        elif len(children) == 1:
-            return my_ast.Sum(self.builder, self.module, None, children[0], self.symbol_table)
-        elif len(children) == 2:
-            children[1].left = children[0]
-            return my_ast.Sum(self.builder, self.module, None,children[1], self.symbol_table)
-        else:
-            return None
+    def arith_div(self, token):
+        return self.bin_arith_op(token, my_ast.Div)
 
     def lhs_assignment(self, children):
         rhs = children[0]
