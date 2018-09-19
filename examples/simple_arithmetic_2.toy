@@ -4,7 +4,7 @@
 main():
     # Simple arithmetic operation
     x = 1 + 2 + 3
-    print('6 == %i', x)
+    print('6 == %i',x )
 
     # Check operator precedence
     y = 2*2 + 1
@@ -15,5 +15,9 @@ main():
     a = 2
     z = 2 * a + (b - 3)
     print('4 == %i', z)
+
+
+    w = z*2 + x/2
+    print('11 == %i',w)
 
     1.

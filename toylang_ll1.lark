@@ -41,7 +41,7 @@
     term: factor [term_]
 
     term_:    "*" factor [term_] -> arith_mul
-            | "/" factor [term_]
+            | "/" factor [term_] -> arith_div
 
     ///////////////////////////////////////////
     //Boolean Expression

@@ -165,9 +165,9 @@ class Div(BinaryOp):
         return 'Div({} , {})'.format(self.left, self.right)
 
     def eval(self):
-        i = self.builder.div(self.left.eval(), self.right.eval())
+        i = self.builder.sdiv(self.left.eval(), self.right.eval())
         return i
-    
+
 
 class Assignment(BinaryOp):
     def eval(self):
