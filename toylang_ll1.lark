@@ -51,9 +51,9 @@
 
     boolean_expr_:    "^" factor [boolean_expr_]
                     | "or" factor [boolean_expr_]
-                    | ">" factor [boolean_expr_]
+                    | ">" factor [boolean_expr_] -> bool_ge
                     | "<" factor [boolean_expr_]
-                    | "==" factor [boolean_expr_]
+                    | "==" factor [boolean_expr_] -> bool_eq
                     | "!=" factor [boolean_expr_] -> bool_neq
 
     ///////////////////////////////////////////
@@ -72,7 +72,9 @@
 
     arglist: expr [more_args]
 
-    fn_arglist: expr [more_args] ["|" boolean_expr]
+    fn_arglist: expr [more_args] [fn_precondition]
+
+    fn_precondition: "|" boolean_expr
 
     more_args:  "," expr [more_args]
 

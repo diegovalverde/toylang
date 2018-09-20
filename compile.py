@@ -26,6 +26,8 @@ class TreeToAst(Transformer):
         self.builder = builder      # The LLVM builder
         self.printf = printf        # Special library functions
         self.debug = debug
+        self.function_map = {}
+        self.main = None
 
     def get_main(self):
         for fn in self.module.functions:
@@ -53,21 +55,38 @@ class TreeToAst(Transformer):
         return token[0]
 
     def function(self, tree):
+        print('function', tree)
 
         fn_name = tree[0].name
 
         if fn_name == 'main':
-            for insn in tree[1]:
-                insn.eval()
-
-            return self.get_main()
+            self.main = tree[1]
         else:
-            fn_arguments = [a.name for a in flatten(tree[1])]
-            fn_body = tree[2]
 
-            # create the function
-            fn = my_ast.Function(self.builder, self.module, fn_name, fn_arguments, fn_body)
-            return fn.eval()
+            fn_arguments = []
+            firm = flatten(tree[1])
+
+            preconditions = None
+            if isinstance(firm[-1], my_ast.BinaryOp):
+                preconditions = firm[-1]
+                firm.pop()
+
+            fn_arguments = [e.name for e in firm]
+            arity = len(fn_arguments)
+            fn_body = flatten(tree[2])
+            function_key = '{}_arity_{}'.format(fn_name, arity)
+
+            clause = my_ast.FunctionClause(function_key, fn_body, preconditions )
+
+            if function_key not in self.function_map:
+                self.function_map[function_key] = my_ast.FunctionMap(self.builder, self.module, function_key,
+                                                                     self.printf, fn_arguments)
+            self.function_map[function_key].clauses.append(clause)
+
+
+    def fn_precondition(self, token):
+        print('fn_precondition', token)
+        return token
 
     def function_body(self, token):
         return token
@@ -89,12 +108,11 @@ class TreeToAst(Transformer):
 
         return my_ast.FunctionCall(self.builder, self.module, '<un-named>', flatten(args) )
 
-    def expr(self, token):
+    def expr_handler(self, token):
         children = remove_invalid(flatten(token))
 
         if self.debug:
             print(children)
-
 
         if len(children) == 2:
             lhs = children[0]
@@ -104,11 +122,18 @@ class TreeToAst(Transformer):
         else:
             return children[0]
 
+    def expr(self, token):
+        return self.expr_handler(token)
+
+    def boolean_expr(self, token):
+
+        return self.expr_handler(token)
+
     def arith_mul(self, children):
         rhs = children[0]
         return my_ast.Mul(self.builder, self.module, None, rhs, self.symbol_table)
 
-    def bin_arith_op(self,token, ast_op):
+    def bin_op(self, token, ast_op):
         children = remove_invalid(flatten(token))
 
         if len(children) == 0:
@@ -122,13 +147,13 @@ class TreeToAst(Transformer):
             return None
 
     def arith_sub(self, token):
-        return self.bin_arith_op(token, my_ast.Sub)
+        return self.bin_op(token, my_ast.Sub)
 
     def arith_add(self, token):
-        return self.bin_arith_op(token, my_ast.Sum)
+        return self.bin_op(token, my_ast.Sum)
 
     def arith_div(self, token):
-        return self.bin_arith_op(token, my_ast.Div)
+        return self.bin_op(token, my_ast.Div)
 
     def lhs_assignment(self, children):
         rhs = children[0]
@@ -156,8 +181,11 @@ class TreeToAst(Transformer):
     def more_args(self, token):
         return token
 
-    def bool_neq(self, token):
-        return ['and',token]
+    def bool_ge(self, token):
+        return self.bin_op(token, my_ast.GreaterThan)
+
+    def bool_eq(self, token):
+        return self.bin_op(token, my_ast.EqualThan)
 
     def print_action(self, token):
         if len(token) == 1:
@@ -209,7 +237,6 @@ if __name__ == '__main__':
     parser.add_argument('--debug', action='store_true', default=False, help='For tool debugging purposes only')
     args = parser.parse_args()
 
-
     toylang_grammar = ''
     text = ''
 
@@ -239,8 +266,23 @@ if __name__ == '__main__':
 
     ast_generator.transform(parse_tree)
 
+    for fn in ast_generator.function_map:
+        print('-I- Emitting Function {}'.format(fn))
+        ast_generator.function_map[fn].eval()
+
+    if ast_generator.main is None:
+        print('Where is main??')
+    else:
+        for insn in ast_generator.main:
+           insn.eval()
+
+
+
     codegen.create_ir()
     codegen.save_ir("output.ll")
+
+    if args.debug:
+        print(module)
 
     #except Exception as e:
     #    print('Compilation error: {}'.format(e))
