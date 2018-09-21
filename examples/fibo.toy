@@ -1,3 +1,11 @@
+#############################################################
+#
+# Fibonacci example.
+# To compile and run using CLANG do:
+# python compile.py examples/fibo.toy
+# llc -filetype=obj output.ll && clang output.o && ./a.out
+#
+#############################################################
 
 
 fibo(N | N == 0) : 0 .
