@@ -56,7 +56,7 @@ class TreeToAst(Transformer):
         return token[0]
 
     def function(self, tree):
-        print('function', tree)
+
 
         fn_name = tree[0].name
 
@@ -87,7 +87,6 @@ class TreeToAst(Transformer):
 
 
     def fn_precondition(self, token):
-        print('fn_precondition', token)
         return token
 
     def function_body(self, token):
@@ -259,7 +258,6 @@ if __name__ == '__main__':
 
     print('parsing done')
 
-
     codegen = CodeGen()
 
     module = codegen.module
@@ -272,7 +270,7 @@ if __name__ == '__main__':
     ast_generator.transform(parse_tree)
 
     for fn in ast_generator.function_definition_list:
-        print('-I- Emitting Function {} <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n\n'.format(fn))
+        print('-I- Emitting Function {} '.format(fn))
         ast_generator.function_map[fn].eval()
 
     if ast_generator.main is None:

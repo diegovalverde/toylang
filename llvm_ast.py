@@ -53,7 +53,7 @@ class ArrayLiteral:
         # args = (self.elements[0].eval(), self.elements[1].eval())
         # add = self.builder.asm(fty, "mov $2, $0\nadd $1, $0", "=r,r,r",args, '',name="asm_add")
 
-        print(self.module)
+
 
         # Allocate n elements
         allocation = self.builder.alloca(t_node, size=len(self.elements))
@@ -239,7 +239,6 @@ class FunctionCall:
                 return self.builder.call(fn, [a.eval() for a in self.args])
 
         if not found:
-            print(self.module)
             raise Exception('Undeclared function \'{}\' '.format(self.name))
 
         return None
@@ -252,7 +251,9 @@ class FunctionClause:
         self.preconditions = preconditions
 
     def set_builder(self, builder):
-        self.preconditions.set_builder(builder)
+        if self.preconditions is not None:
+            self.preconditions.set_builder(builder)
+
         for stmt in self.body:
             stmt.set_builder(builder)
 
@@ -280,26 +281,67 @@ class FunctionMap:
         block = fn.append_basic_block(name='entry_'.format(self.name))
         builder = ir.IRBuilder(block)
 
-        #for i in range(len(self.clauses)):
-
         self.emit_clause(builder, 0)
 
         return fn
 
     def emit_clause(self, builder, clause_idx):
-        print('emitting clause ', clause_idx)
+
         clause = self.clauses[clause_idx]
         clause.set_builder(builder)
-        pred = clause.preconditions.eval()
 
+        default_clause_idx = None
+
+        next_builder = builder
+        if clause.preconditions is None:
+            default_clause_idx = clause_idx
+        else:
+            next_builder = self.emit_conditional_clause(builder, clause_idx)
+
+        # emit the next function clause for this function
+        # or print an error in case there are no more function clauses
+        clause_idx += 1
+        if clause_idx < len(self.clauses):
+            self.emit_clause(next_builder, clause_idx)
+        elif default_clause_idx is not None:
+            self.emit_simple_clause(next_builder, default_clause_idx)
+        else:
+            error_string = String(next_builder, self.module,
+                                  ' Runtime Error: No matching case for function {} with arity {} '.format(
+                                      self.name, self.arity))
+
+            p = Print(next_builder, self.module, self.print_function, error_string, [])
+            p.eval()
+            next_builder.ret(ir.Constant(ir.IntType(32), int(0)))
+
+        print(self.module)
+
+    def emit_simple_clause(self, builder, clause_idx):
+
+        clause = self.clauses[clause_idx]
+        clause.set_builder(builder)
+        ret_stmt = clause.body[-1]
+        fn_stmts = clause.body[:-1]
+
+        for stmt in fn_stmts:
+            stmt.set_builder(builder)
+            stmt.eval()
+
+        ret_stmt.set_builder(builder)
+        builder.ret(ret_stmt.eval())
+
+    def emit_conditional_clause(self, builder, clause_idx):
+
+        clause = self.clauses[clause_idx]
+        clause.set_builder(builder)
+
+        pred = clause.preconditions.eval()
         true_br = builder.append_basic_block(name='clause_{}_true'.format(clause_idx))
         false_br = builder.append_basic_block(name='clause_{}_false'.format(clause_idx))
-        print('=====================================')
-        print('builder.block.is_terminated',builder.block.is_terminated)
-        print(self.module)
 
         builder.cbranch(pred, true_br, false_br)
         true_builder = ir.IRBuilder(true_br)
+
         # emit instructions for when the predicate is true
         # Also include the return here
         ret_stmt = clause.body[-1]
@@ -311,128 +353,8 @@ class FunctionMap:
 
         ret_stmt.set_builder(true_builder)
         true_builder.ret(ret_stmt.eval())
-        print(self.module)
-        false_builder = ir.IRBuilder(false_br)
 
-        # emit the next function clause for this function
-        # or print an error in case there are no more function clauses
-        clause_idx += 1
-        if clause_idx < len(self.clauses):
-            self.emit_clause(false_builder, clause_idx)
-        else:
-            error_string = String(false_builder, self.module,
-                                  'Runtime Error: No matching case for function {} with arity {}'.format(
-                                      self.name, self.arity))
-
-            p = Print(false_builder, self.module, self.print_function, error_string, [])
-            p.eval()
-            false_builder.ret(ir.Constant(ir.IntType(32), int(0)))
-
-        print(self.module)
-        return
-        with builder.if_else(pred) as (then, otherwise):
-            with then:
-                # emit instructions for when the predicate is true
-                # Also include the return here
-                ret_stmt = clause.body[-1]
-                fn_stmts = clause.body[:-1]
-
-                for stmt in fn_stmts:
-                    stmt.set_builder(builder)
-                    stmt.eval()
-
-                ret_stmt.set_builder(builder)
-                builder.ret(ret_stmt.eval())
-
-            with otherwise:
-                # emit the next function clause for this function
-                # or print an error in case there are no more function clauses
-                clause_idx += 1
-                if clause_idx < len(self.clauses):
-                    self.emit_clause(builder, clause_idx)
-                else:
-                    error_string = String(builder, self.module,
-                                          'Runtime Error: No matching case for function {} with arity {}'.format(
-                                              self.name, self.arity))
-
-                    p = Print(builder, self.module, self.print_function, error_string, [])
-                    p.eval()
-
-        nop = Sum(builder, self.module, Number(builder, self.module, 0), Number(builder, self.module, 0), None)
-        nop.eval()
-
-        print(self.module )
-
-        builder.ret(ir.Constant(ir.IntType(32), int(0)))
-        return
-
-
-
-class Function:
-    def __init__(self, builder, module, name, args, fn_body, printf, preconditions=None):
-        self.builder = builder
-        self.module = module
-        self.name = name
-        self.args = args
-        self.arg_types = [ir.IntType(32)]*len(args)  # Assume all arguments are double for now
-        self.fn_body = fn_body
-        self.preconditions = preconditions
-        self.printf = printf
-
-    def eval(self):
-        func_type = ir.FunctionType(ir.IntType(32), self.arg_types, False)
-        fn = ir.Function(self.module, func_type, name=self.name)
-
-        for i in range(len(self.args)):
-            fn.args[i].name = self.args[i]
-
-        print('!!!!!!', self.fn_body)
-
-        ret_stmt = self.fn_body[-1]
-        fn_stmts = self.fn_body[:-1]
-
-        print('!!!!!! 2', fn_stmts, ret_stmt)
-        # Now implement the function
-        block = fn.append_basic_block(name='entry')
-        builder = ir.IRBuilder(block)
-
-        # Start by placing all of the function pre-conditions
-        if self.preconditions is not None:
-            self.preconditions.set_builder(builder)
-            pred = self.preconditions.eval()
-            with builder.if_else(pred) as (then, otherwise):
-                with then:
-                    # emit instructions for when the predicate is true
-                    # Also include the return here
-                    for stmt in fn_stmts:
-                        stmt.set_builder(builder)
-                        stmt.eval()
-
-                with otherwise:
-                    # emit the next function clause for this function
-                    # or print an error in case there are no more function clauses
-                    error_string = String(builder, self.module,
-                                          'Runtime Error: No matching case for function {} with arity {}'.format(
-                                              self.name,
-                                              len(self.args)))
-
-                    p = Print(builder, self.module, self.printf, error_string, [])
-                    p.eval()
-
-        else:
-            for stmt in fn_stmts:
-                stmt.set_builder(builder)
-                stmt.eval()
-                    #fn_stmts[0].eval()
-            #print('x:=', x)
-
-        print(self.module)
-
-
-        # By convention the last statement in the function is the return statement
-        ret_stmt.set_builder(builder)
-        builder.ret(ret_stmt.eval())
-        return fn
+        return ir.IRBuilder(false_br)
 
 
 class String:
