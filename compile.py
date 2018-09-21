@@ -27,6 +27,7 @@ class TreeToAst(Transformer):
         self.printf = printf        # Special library functions
         self.debug = debug
         self.function_map = {}
+        self.function_definition_list = []
         self.main = None
 
     def get_main(self):
@@ -79,6 +80,7 @@ class TreeToAst(Transformer):
             clause = my_ast.FunctionClause(function_key, fn_body, preconditions )
 
             if function_key not in self.function_map:
+                self.function_definition_list.append(function_key)
                 self.function_map[function_key] = my_ast.FunctionMap(self.builder, self.module, function_key,
                                                                      self.printf, fn_arguments)
             self.function_map[function_key].clauses.append(clause)
@@ -187,6 +189,9 @@ class TreeToAst(Transformer):
     def bool_eq(self, token):
         return self.bin_op(token, my_ast.EqualThan)
 
+    def bool_lt(self,token):
+        return self.bin_op(token, my_ast.LessThan)
+
     def print_action(self, token):
         if len(token) == 1:
             return my_ast.Print(self.builder, self.module, self.printf, token[0], [])
@@ -266,8 +271,8 @@ if __name__ == '__main__':
 
     ast_generator.transform(parse_tree)
 
-    for fn in ast_generator.function_map:
-        print('-I- Emitting Function {}'.format(fn))
+    for fn in ast_generator.function_definition_list:
+        print('-I- Emitting Function {} <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n\n'.format(fn))
         ast_generator.function_map[fn].eval()
 
     if ast_generator.main is None:

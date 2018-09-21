@@ -52,7 +52,7 @@
     boolean_expr_:    "^" factor [boolean_expr_]
                     | "or" factor [boolean_expr_]
                     | ">" factor [boolean_expr_] -> bool_ge
-                    | "<" factor [boolean_expr_]
+                    | "<" factor [boolean_expr_] -> bool_lt
                     | "==" factor [boolean_expr_] -> bool_eq
                     | "!=" factor [boolean_expr_] -> bool_neq
 

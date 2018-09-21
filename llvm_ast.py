@@ -186,8 +186,15 @@ class EqualThan(BinaryOp):
         return 'GreaterThan({} , {})'.format(self.left, self.right)
 
     def eval(self):
-        i = self.builder.icmp_signed('==', self.left.eval(), self.right.eval())
-        return i
+        return self.builder.icmp_signed('==', self.left.eval(), self.right.eval())
+
+
+class LessThan(BinaryOp):
+    def __repr__(self):
+        return 'LessThan({} , {})'.format(self.left, self.right)
+
+    def eval(self):
+        return self.builder.icmp_signed('<', self.left.eval(), self.right.eval())
 
 
 class Assignment(BinaryOp):
@@ -212,8 +219,11 @@ class FunctionCall:
     def __init__(self, builder, module, name, args):
         self.builder = builder
         self.module = module
-        self.name = name
+        self.name = name#'{}_arity_{}'.format(name, len(args))
         self.args = args
+
+    def __repr__(self):
+        return 'FunctionCall({})'.format(self.name)
 
     def set_builder(self, builder):
         self.builder = builder
@@ -222,7 +232,7 @@ class FunctionCall:
 
     def eval(self):
         found = False
-        name = '{}_arity_{}'.format(self.name,len(self.args))
+        name = '{}_arity_{}'.format(self.name, len(self.args)) #self.name
 
         for fn in self.module.functions:
             if fn.name == name:
@@ -446,6 +456,12 @@ class Print:
         self.printf = printf
         self.fmt_str = fmt_str
         self.arg_list = arg_list
+
+    def set_builder(self, builder):
+        self.builder = builder
+        for arg in self.arg_list:
+            arg.set_builder(builder)
+
 
     def eval(self):
         values = [v.eval() for v in self.arg_list]
