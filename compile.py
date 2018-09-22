@@ -65,7 +65,8 @@ class TreeToAst(Transformer):
         else:
 
             fn_arguments = []
-            firm = flatten(tree[1])
+            firm = remove_invalid(flatten(tree[1]))
+            print('----->', firm)
 
             preconditions = None
             if isinstance(firm[-1], my_ast.BinaryOp):
@@ -156,6 +157,10 @@ class TreeToAst(Transformer):
     def arith_div(self, token):
         return self.bin_op(token, my_ast.Div)
 
+    def arith_mod(self,token):
+        print('arith_mod',token)
+        return self.bin_op(token[0], my_ast.Mod)
+
     def lhs_assignment(self, children):
         rhs = children[0]
         return my_ast.Assignment(self.builder, self.module, None, rhs, self.symbol_table)
@@ -176,20 +181,52 @@ class TreeToAst(Transformer):
     def arglist(self, token):
         return token
 
-    def fn_arglist(self,token):
+    def fn_arglist(self, token):
+        print('fn_arglist',token)
         return token
 
     def more_args(self, token):
         return token
 
-    def bool_ge(self, token):
+    def bool_gt(self, token):
         return self.bin_op(token, my_ast.GreaterThan)
+
+    def bool_and(self, token):
+        return self.bin_op(token, my_ast.And)
 
     def bool_eq(self, token):
         return self.bin_op(token, my_ast.EqualThan)
 
     def bool_lt(self,token):
         return self.bin_op(token, my_ast.LessThan)
+
+    def boolean_binary_term(self, token):
+        if len(token) == 2:
+            token[1].left = token[0]
+            print('boolean_term',token[1])
+            return token[1]
+        else:
+            return token[0]
+
+    def boolean_binary_term_(self,token):
+        if len(token) == 2:
+            token[1].left = token[0]
+            print('boolean_binary_term_', token[1])
+            return token[1]
+        else:
+            return token[0]
+
+    def bool_factor(self,token):
+        return token[0]
+
+    def boolean_expr(self,token):
+        print('boolean_expr', token)
+        if len(token) == 2:
+            token[1].left = token[0]
+            print('boolean_expr',token[1])
+            return token[1]
+        else:
+            return token[0]
 
     def print_action(self, token):
         if len(token) == 1:

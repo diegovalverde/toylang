@@ -42,19 +42,24 @@
 
     term_:    "*" factor [term_] -> arith_mul
             | "/" factor [term_] -> arith_div
+            | "%" factor [term_] -> arith_mod
+
 
     ///////////////////////////////////////////
     //Boolean Expression
     ///////////////////////////////////////////
 
-    boolean_expr: factor boolean_expr_
+    boolean_expr: boolean_binary_term [boolean_expr_]
 
-    boolean_expr_:    "^" factor [boolean_expr_]
-                    | "or" factor [boolean_expr_]
-                    | ">" factor [boolean_expr_] -> bool_ge
-                    | "<" factor [boolean_expr_] -> bool_lt
-                    | "==" factor [boolean_expr_] -> bool_eq
-                    | "!=" factor [boolean_expr_] -> bool_neq
+    boolean_expr_:  "&" boolean_binary_term [boolean_expr_]    -> bool_and
+                   | "or" boolean_binary_term [boolean_expr_]  -> bool_or
+
+    boolean_binary_term: factor boolean_binary_term_
+
+    boolean_binary_term_:    ">"  factor  -> bool_gt
+                    | "<"  factor  -> bool_lt
+                    | "==" factor  -> bool_eq
+                    | "!=" factor  -> bool_neq
 
     ///////////////////////////////////////////
 

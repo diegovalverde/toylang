@@ -168,8 +168,15 @@ class Div(BinaryOp):
         return 'Div({} , {})'.format(self.left, self.right)
 
     def eval(self):
-        i = self.builder.sdiv(self.left.eval(), self.right.eval())
-        return i
+        return self.builder.sdiv(self.left.eval(), self.right.eval())
+
+
+class Mod(BinaryOp):
+    def __repr__(self):
+        return 'Mod({} , {})'.format(self.left, self.right)
+
+    def eval(self):
+        return self.builder.srem(self.left.eval(), self.right.eval())
 
 
 class GreaterThan(BinaryOp):
@@ -183,10 +190,18 @@ class GreaterThan(BinaryOp):
 
 class EqualThan(BinaryOp):
     def __repr__(self):
-        return 'GreaterThan({} , {})'.format(self.left, self.right)
+        return 'Equal({} , {})'.format(self.left, self.right)
 
     def eval(self):
         return self.builder.icmp_signed('==', self.left.eval(), self.right.eval())
+
+
+class And(BinaryOp):
+    def __repr__(self):
+        return 'And({} , {})'.format(self.left, self.right)
+
+    def eval(self):
+        return self.builder.and_( self.left.eval(), self.right.eval())
 
 
 class LessThan(BinaryOp):
@@ -362,6 +377,9 @@ class String:
         self.builder = builder
         self.module = module
         self.fmt_str = '{}\n\0'.format(fmt_str[1:-1])
+
+    def set_builder(self, builder):
+        self.builder = builder
 
     def __repr__(self):
         return 'String({})'.format(self.fmt_str)
