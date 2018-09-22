@@ -329,8 +329,6 @@ class FunctionMap:
             p.eval()
             next_builder.ret(ir.Constant(ir.IntType(32), int(0)))
 
-        print(self.module)
-
     def emit_simple_clause(self, builder, clause_idx):
 
         clause = self.clauses[clause_idx]

@@ -66,7 +66,6 @@ class TreeToAst(Transformer):
 
             fn_arguments = []
             firm = remove_invalid(flatten(tree[1]))
-            print('----->', firm)
 
             preconditions = None
             if isinstance(firm[-1], my_ast.BinaryOp):
@@ -158,7 +157,6 @@ class TreeToAst(Transformer):
         return self.bin_op(token, my_ast.Div)
 
     def arith_mod(self,token):
-        print('arith_mod',token)
         return self.bin_op(token[0], my_ast.Mod)
 
     def lhs_assignment(self, children):
@@ -182,7 +180,6 @@ class TreeToAst(Transformer):
         return token
 
     def fn_arglist(self, token):
-        print('fn_arglist',token)
         return token
 
     def more_args(self, token):
@@ -203,7 +200,6 @@ class TreeToAst(Transformer):
     def boolean_binary_term(self, token):
         if len(token) == 2:
             token[1].left = token[0]
-            print('boolean_term',token[1])
             return token[1]
         else:
             return token[0]
@@ -211,7 +207,6 @@ class TreeToAst(Transformer):
     def boolean_binary_term_(self,token):
         if len(token) == 2:
             token[1].left = token[0]
-            print('boolean_binary_term_', token[1])
             return token[1]
         else:
             return token[0]
@@ -220,10 +215,8 @@ class TreeToAst(Transformer):
         return token[0]
 
     def boolean_expr(self,token):
-        print('boolean_expr', token)
         if len(token) == 2:
             token[1].left = token[0]
-            print('boolean_expr',token[1])
             return token[1]
         else:
             return token[0]
@@ -258,7 +251,7 @@ class TreeToAst(Transformer):
     def string(self, token):
         return my_ast.String(self.builder, self.module, token[0])
 
-    def number(self,node):
+    def number(self, node):
         return node[0]
 
     def number_(self,token):
@@ -307,7 +300,9 @@ if __name__ == '__main__':
     ast_generator.transform(parse_tree)
 
     for fn in ast_generator.function_definition_list:
-        print('-I- Emitting Function {} '.format(fn))
+        if args.debug:
+            print('-I- Emitting Function {} '.format(fn))
+            
         ast_generator.function_map[fn].eval()
 
     if ast_generator.main is None:
