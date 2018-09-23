@@ -8,9 +8,9 @@
 #############################################################
 
 
-fibo(N | N == 0) : 0 .
+fibo(N | N = 0) : 0 .
  
-fibo(N | N == 1) : 1 .
+fibo(N | N = 1) : 1 .
 
 fibo(N | N > 1):
     fibo( N - 1 ) + fibo( N - 2 ).
@@ -20,7 +20,7 @@ repeat(count | count < 10):
     print('fibo(0) = %i', fibo(count))
     repeat(count + 1).
 
-repeat(count | count == 10):
+repeat(count | count = 10):
     1.
 
 main():

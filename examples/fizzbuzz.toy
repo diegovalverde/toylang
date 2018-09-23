@@ -1,15 +1,15 @@
 
 fbz(N | N > 50) : 1.
 
-fbz( N | (N % 3) == 0 & (N % 5) == 0):
+fbz( N | (N % 3) = 0 & (N % 5) = 0):
     print('fizzbuzz')
     fbz(N+1).
 
-fbz( N | (N % 3) == 0 ):
+fbz( N | (N % 3) = 0 ):
     print('fizz')
     fbz(N+1).
 
-fbz( N | (N % 5) == 0):
+fbz( N | (N % 5) = 0):
     print('buzz')
     fbz(N+1).
 

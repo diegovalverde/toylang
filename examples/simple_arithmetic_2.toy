@@ -3,21 +3,21 @@
 
 main():
     # Simple arithmetic operation
-    x = 1 + 2 + 3
-    print('6 == %i',x )
+    x <- 1 + 2 + 3
+    print('6 = %i',x )
 
     # Check operator precedence
-    y = 2*2 + 1
-    print('5 == %i', y)
+    y <- 2*2 + 1
+    print('5 = %i', y)
 
     # One more test
-    b = 3
-    a = 2
-    z = 2 * a + (b - 3)
-    print('4 == %i', z)
+    b <- 3
+    a <- 2
+    z <- 2 * a + (b - 3)
+    print('4 = %i', z)
 
     # Now one with division
-    w = z*2 + x/2
-    print('11 == %i',w)
+    w <- z*2 + x/2
+    print('11 = %i',w)
 
     1.

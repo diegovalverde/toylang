@@ -30,7 +30,7 @@
     expr: term expr_rhs
 
 
-    expr_rhs: "=" expr -> lhs_assignment
+    expr_rhs: "<-" expr -> lhs_assignment
               | [expr_]
 
 
@@ -58,7 +58,7 @@
 
     boolean_binary_term_:    ">"  factor  -> bool_gt
                     | "<"  factor  -> bool_lt
-                    | "==" factor  -> bool_eq
+                    | "=" factor  -> bool_eq
                     | "!=" factor  -> bool_neq
 
     ///////////////////////////////////////////

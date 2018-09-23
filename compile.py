@@ -302,7 +302,7 @@ if __name__ == '__main__':
     for fn in ast_generator.function_definition_list:
         if args.debug:
             print('-I- Emitting Function {} '.format(fn))
-            
+
         ast_generator.function_map[fn].eval()
 
     if ast_generator.main is None:
